@@ -3,6 +3,12 @@ package main
 import (
 	"bufio"
 	"os"
+	"strings"
+)
+
+const (
+	sep         = ";"
+	numOfValues = 4
 )
 
 func readFile(in <-chan string) <-chan string {
@@ -37,8 +43,12 @@ func parseLine(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
 		for line := range in {
-			// parseSomeHow
-			// out <- parsedLine
+			incomeValues := strings.Split(line, sep)
+			if len(incomeValues) != numOfValues {
+				// process wrong values number
+			}
+			outcomeString := "temp outcome"
+			out <- outcomeString
 		}
 		close(out)
 	}()
