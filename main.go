@@ -42,6 +42,7 @@ func readFile(in <-chan string) <-chan string {
 func parseLine(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
+		defer close(out)
 		for line := range in {
 			incomeValues := strings.Split(line, sep)
 			if len(incomeValues) != numOfValues {
@@ -50,7 +51,7 @@ func parseLine(in <-chan string) <-chan string {
 			outcomeString := "temp outcome"
 			out <- outcomeString
 		}
-		close(out)
+
 	}()
 	return out
 }
@@ -58,10 +59,22 @@ func parseLine(in <-chan string) <-chan string {
 func saveLine(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
-		for line := range in {
-			// save line to file
+		defer close(out)
+		file, err := os.Open("fileName")
+		if err != nil {
+			// process open file error
+			return
 		}
-		close(out)
+		defer file.Close()
+		for line := range in {
+			n, err := file.WriteString(line + "\n")
+			if err != nil {
+				// process err
+			}
+			if n != len(line) {
+				// process wrong n number
+			}
+		}
 	}()
 	return out
 }
