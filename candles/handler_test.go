@@ -118,6 +118,57 @@ func TestNewHandler(t *testing.T) {
 	}
 }
 
+func TestProcessLine(t *testing.T) {
+	type ProcessLineTestCase struct {
+		handler  *Handler
+		newLines []string
+		result   [][]string
+	}
+	tables := []ProcessLineTestCase{
+		ProcessLineTestCase{
+			handler: &Handler{
+				candles:  make(map[string]*candle),
+				duration: 1 * time.Minute,
+			},
+			newLines: []string{
+				"AMZN,1645,3,2019-01-31 07:00:01.970000",
+				"SBR,250.67,3,2019-01-31 07:00:01.980000",
+				"AMZN,1675.6,3,2019-01-31 07:00:30.970000",
+				"SBR,256.67,3,2019-01-31 07:00:30.980000",
+				"AMZN,1675,3,2019-01-31 07:01:00.000000",
+				"SBR,258.67,3,2019-01-31 07:01:30.000000",
+			},
+			result: [][]string{
+				{},
+				{},
+				{},
+				{},
+				{"AMZN,2019-01-31T07:00:00Z,1645,1675.6,1645,1675",
+					"SBR,2019-01-31T07:00:00Z,250.67,258.67,250.67,258.67"},
+				{},
+			},
+		},
+	}
+	for _, table := range tables {
+		for i := 0; i < len(table.newLines); i++ {
+			resultStrings, err := table.handler.ProcessLine(table.newLines[i])
+			if err != nil {
+				t.Fatalf("TestProcessLine: failed to process new line: %s", err)
+			}
+			if len(table.result[i]) != len(resultStrings) {
+				t.Fatalf("TestProcessLine: wrong number of outcome strings, "+
+					"expected: %v, got: %v", len(table.result[i]), len(resultStrings))
+			}
+			for j := 0; j < len(table.result[j]); j++ {
+				if table.result[i][j] != resultStrings[j] {
+					t.Fatalf("TestProcessLine: wrong out string step: %v, line: %v, "+
+						"expected: %v, got: %v", i+1, j+1, table.result[i][j], resultStrings[j])
+				}
+			}
+		}
+	}
+}
+
 func TestClose(t *testing.T) {
 	type CloseTestCase struct {
 		handler *Handler

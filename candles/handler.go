@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	sep         = ";"
+	sep         = ","
 	numOfValues = 4
-	timeFormat  = "2006-01-02 15:04:05.000006"
+	timeFormat  = "2006-01-02 15:04:05.000000"
 )
 
 var errWrongNumberOfParameters = errors.New("wrong number of parameters")
@@ -34,7 +34,7 @@ func parseInputLine(line string) (inputValues, error) {
 	if err != nil {
 		return values, err
 	}
-	t, err := time.Parse(timeFormat, inputStrings[2])
+	t, err := time.Parse(timeFormat, inputStrings[3])
 	if err != nil {
 		return values, err
 	}
@@ -92,7 +92,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 
 	var candlesStrings []string
 	for ticker, currentCandle := range handler.candles {
-		if values.unixTime.Sub(currentCandle.unixTime) > handler.duration {
+		if values.unixTime.Sub(currentCandle.unixTime) >= handler.duration {
 			candlesStrings = append(candlesStrings, currentCandle.ToCsvString())
 			delete(handler.candles, ticker)
 		}
