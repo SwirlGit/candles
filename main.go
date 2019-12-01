@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"os"
 	"time"
 
@@ -80,7 +81,13 @@ func saveLine(in <-chan string) <-chan string {
 }
 
 func main() {
-	// setup pipeline
+	fileNamePtr := flag.String("file", "", "path to file with trades")
+	flag.Parse()
+	if len(*fileNamePtr) == 0 {
+		flag.Usage()
+		return
+	}
+
 	in := make(chan string)
 	fileLinesOut := readFile(in)
 	parsedLinesOut := parseLine(fileLinesOut)
