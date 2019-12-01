@@ -20,7 +20,7 @@ var validStartDuration = 7 * time.Hour
 type inputValues struct {
 	ticker   string
 	unixTime time.Time
-	prize    float64
+	price    float64
 }
 
 func parseInputLine(line string) (inputValues, error) {
@@ -30,7 +30,7 @@ func parseInputLine(line string) (inputValues, error) {
 		return values, errWrongNumberOfParameters
 	}
 	ticker := inputStrings[0]
-	prize, err := strconv.ParseFloat(inputStrings[1], 64)
+	price, err := strconv.ParseFloat(inputStrings[1], 64)
 	if err != nil {
 		return values, err
 	}
@@ -43,7 +43,7 @@ func parseInputLine(line string) (inputValues, error) {
 	values = inputValues{
 		ticker:   ticker,
 		unixTime: t,
-		prize:    prize,
+		price:    price,
 	}
 	return values, nil
 }
@@ -101,9 +101,9 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 
 	if _, exist := handler.candles[values.ticker]; !exist {
 		handler.candles[values.ticker] = createCandle(values.ticker,
-			baseTime(values.unixTime, handler.duration), values.prize)
+			baseTime(values.unixTime, handler.duration), values.price)
 	} else {
-		handler.candles[values.ticker].updatePrize(values.prize)
+		handler.candles[values.ticker].updatePrice(values.price)
 	}
 
 	return candlesStrings, nil
