@@ -169,20 +169,20 @@ func TestProcessLine(t *testing.T) {
 	}
 }
 
-func TestClose(t *testing.T) {
-	type CloseTestCase struct {
+func TestFlush(t *testing.T) {
+	type FlushTestCase struct {
 		handler *Handler
 		result  []string
 	}
-	tables := []CloseTestCase{
-		CloseTestCase{
+	tables := []FlushTestCase{
+		FlushTestCase{
 			handler: &Handler{
 				candles:  make(map[string]*candle),
 				duration: 1 * time.Minute,
 			},
 			result: []string{},
 		},
-		CloseTestCase{
+		FlushTestCase{
 			handler: &Handler{
 				candles: map[string]*candle{
 					"Ticker1": &candle{
@@ -210,7 +210,7 @@ func TestClose(t *testing.T) {
 		},
 	}
 	for _, table := range tables {
-		resultStrings := table.handler.Close()
+		resultStrings := table.handler.flush()
 		if len(table.result) != len(resultStrings) {
 			t.Fatalf("TestClose: wrong number of outcome strings, "+
 				"expected: %v, got: %v", len(table.result), len(resultStrings))

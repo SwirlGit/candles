@@ -13,8 +13,12 @@ func readFile(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
-		fileName, ok := <-in
-		if ok {
+		for {
+			fileName, ok := <-in
+			if !ok {
+				break
+			}
+
 			file, err := os.Open(fileName)
 			if err != nil {
 				// process open file error
@@ -26,12 +30,10 @@ func readFile(in <-chan string) <-chan string {
 			for scanner.Scan() {
 				out <- scanner.Text()
 			}
-
 			if err := scanner.Err(); err != nil {
 				// process scanner error
 			}
-		} else {
-			// process in channel closing
+			out <- "EOF"
 		}
 	}()
 	return out
@@ -42,7 +44,11 @@ func parseLine(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
-		for line := range in {
+		for {
+			line, ok := <-in
+			if !ok {
+				break
+			}
 			outStrings, err := handler.ProcessLine(line)
 			if err != nil {
 				// process parsing error
@@ -52,22 +58,29 @@ func parseLine(in <-chan string) <-chan string {
 				out <- outString
 			}
 		}
-
 	}()
 	return out
 }
 
-func saveLine(in <-chan string) <-chan string {
-	out := make(chan string)
+func saveLine(in <-chan string) <-chan struct{} {
+	out := make(chan struct{})
 	go func() {
 		defer close(out)
-		file, err := os.Open("fileName")
+		file, err := os.Create("candles_5min.csv")
 		if err != nil {
 			// process open file error
 			return
 		}
 		defer file.Close()
-		for line := range in {
+		for {
+			line, ok := <-in
+			if !ok {
+				break
+			}
+			if line == "EOF" {
+				out <- struct{}{}
+				continue
+			}
 			n, err := file.WriteString(line + "\n")
 			if err != nil {
 				// process err
@@ -80,6 +93,16 @@ func saveLine(in <-chan string) <-chan string {
 	return out
 }
 
+func handlePipeline(fileName string) {
+	filesIn := make(chan string)
+	fileLinesOut := readFile(filesIn)
+	candlesOut := parseLine(fileLinesOut)
+	finalOut := saveLine(candlesOut)
+
+	filesIn <- fileName
+	<-finalOut
+}
+
 func main() {
 	fileNamePtr := flag.String("file", "", "path to file with trades")
 	flag.Parse()
@@ -87,11 +110,5 @@ func main() {
 		flag.Usage()
 		return
 	}
-
-	in := make(chan string)
-	fileLinesOut := readFile(in)
-	parsedLinesOut := parseLine(fileLinesOut)
-	finalOut := saveLine(parsedLinesOut)
-
-	<-finalOut
+	handlePipeline(*fileNamePtr)
 }

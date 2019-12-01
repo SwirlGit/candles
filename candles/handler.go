@@ -81,6 +81,12 @@ func NewHandler(duration time.Duration) *Handler {
 
 // ProcessLine обработать строку
 func (handler *Handler) ProcessLine(line string) ([]string, error) {
+	if line == "EOF" {
+		flushedCandles := handler.flush()
+		flushedCandles = append(flushedCandles, "EOF")
+		return flushedCandles, nil
+	}
+
 	values, err := parseInputLine(line)
 	if err != nil {
 		return []string{}, err
@@ -108,8 +114,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 	return candlesStrings, nil
 }
 
-// Close закончить обработку
-func (handler *Handler) Close() []string {
+func (handler *Handler) flush() []string {
 	var candlesStrings []string
 	for ticker, currentCandle := range handler.candles {
 		candlesStrings = append(candlesStrings, currentCandle.ToCsvString())
