@@ -67,7 +67,7 @@ func baseTime(t time.Time, d time.Duration) time.Time {
 
 // Handler управляющий набором свечей
 type Handler struct {
-	candles  map[string]candle
+	candles  map[string]*candle
 	duration time.Duration
 	lastTime time.Time
 }
@@ -100,7 +100,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 	}
 
 	if _, exist := handler.candles[values.ticker]; !exist {
-		handler.candles[values.ticker] = createCandle(values.ticker,
+		handler.candles[values.ticker] = newCandle(values.ticker,
 			baseTime(values.unixTime, handler.duration), values.price)
 	} else {
 		handler.candles[values.ticker].updatePrice(values.price)

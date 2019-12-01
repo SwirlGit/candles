@@ -13,8 +13,8 @@ type candle struct {
 	lastPrice float64
 }
 
-func createCandle(ticker string, t time.Time, price float64) candle {
-	return candle{
+func newCandle(ticker string, t time.Time, price float64) *candle {
+	return &candle{
 		ticker:    ticker,
 		unixTime:  t,
 		maxPrice:  price,
@@ -23,7 +23,7 @@ func createCandle(ticker string, t time.Time, price float64) candle {
 	}
 }
 
-func (c candle) updatePrice(price float64) {
+func (c *candle) updatePrice(price float64) {
 	if price > c.maxPrice {
 		c.maxPrice = price
 	}
@@ -33,7 +33,13 @@ func (c candle) updatePrice(price float64) {
 	c.lastPrice = price
 }
 
-func (c candle) String() string {
+func (c *candle) String() string {
+	return fmt.Sprintf("[ticker: %v, unixTime: %v, maxPrice: %v, "+
+		"minPrice: %v, lastPrice: %v]", c.ticker, c.unixTime,
+		c.maxPrice, c.minPrice, c.lastPrice)
+}
+
+func (c *candle) ToCsvString() string {
 	return fmt.Sprintf("%v;%v;%v;%v;%v", c.ticker, c.unixTime,
 		c.maxPrice, c.minPrice, c.lastPrice)
 }
