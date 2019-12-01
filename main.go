@@ -36,16 +36,19 @@ func readFile(in <-chan string) <-chan string {
 }
 
 func parseLine(in <-chan string) <-chan string {
-	var candle *candles.Candle
+	handler := candles.NewHandler(5 * 60)
 	out := make(chan string)
 	go func() {
 		defer close(out)
 		for line := range in {
-			err := candle.Update(line)
+			outStrings, err := handler.ProcessLine(line)
 			if err != nil {
 				// process parsing error
+				continue
 			}
-			out <- candle.String()
+			for _, outString := range outStrings {
+				out <- outString
+			}
 		}
 
 	}()
