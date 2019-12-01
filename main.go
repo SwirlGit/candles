@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
+	"log"
 	"os"
 	"time"
 
@@ -13,28 +15,23 @@ func readFile(in <-chan string) <-chan string {
 	out := make(chan string)
 	go func() {
 		defer close(out)
-		for {
-			fileName, ok := <-in
-			if !ok {
-				break
-			}
 
-			file, err := os.Open(fileName)
-			if err != nil {
-				// process open file error
-				return
-			}
-			defer file.Close()
-
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
-				out <- scanner.Text()
-			}
-			if err := scanner.Err(); err != nil {
-				// process scanner error
-			}
-			out <- "EOF"
+		fileName := <-in
+		file, err := os.Open(fileName)
+		if err != nil {
+			// process open file error
+			return
 		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			out <- scanner.Text()
+		}
+		if err := scanner.Err(); err != nil {
+			// process scanner error
+		}
+		out <- "EOF"
 	}()
 	return out
 }
@@ -75,10 +72,9 @@ func saveLine(in <-chan string) <-chan struct{} {
 		for {
 			line, ok := <-in
 			if !ok {
-				break
+				return
 			}
 			if line == "EOF" {
-				out <- struct{}{}
 				continue
 			}
 			n, err := file.WriteString(line + "\n")
@@ -93,14 +89,16 @@ func saveLine(in <-chan string) <-chan struct{} {
 	return out
 }
 
-func handlePipeline(fileName string) {
+func startPipeline(fileName string) <-chan struct{} {
 	filesIn := make(chan string)
 	fileLinesOut := readFile(filesIn)
 	candlesOut := parseLine(fileLinesOut)
-	finalOut := saveLine(candlesOut)
+	done := saveLine(candlesOut)
 
 	filesIn <- fileName
-	<-finalOut
+	close(filesIn)
+
+	return done
 }
 
 func main() {
@@ -110,5 +108,16 @@ func main() {
 		flag.Usage()
 		return
 	}
-	handlePipeline(*fileNamePtr)
+
+	done := startPipeline(*fileNamePtr)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	select {
+	case <-done:
+		return
+	case <-ctx.Done():
+		log.Println(ctx.Err())
+	}
 }

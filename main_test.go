@@ -32,11 +32,12 @@ func checkCurrentCandles(t *testing.T, testCandles, resultCandles map[string]str
 	}
 }
 
-// TestHandlePipeline так как порядок выходных строк не фиксирован, кроме
+// TestStartPipeline так как порядок выходных строк не фиксирован, кроме
 // сортировки по времени, то будем проверять данные блоками, где
 // в каждом блоке все данные для одного времени открытия
-func TestHandlePipeline(t *testing.T) {
-	handlePipeline(inputTestDataFileName)
+func TestStartPipeline(t *testing.T) {
+	done := startPipeline(inputTestDataFileName)
+	<-done
 
 	testDataFile, err := os.Open(outputTestDataFileName)
 	if err != nil {
