@@ -94,3 +94,30 @@ func TestUpdatePrice(t *testing.T) {
 		}
 	}
 }
+
+func TestToCsvString(t *testing.T) {
+	type ToCsvStringTestCase struct {
+		candleToConver candle
+		result         string
+	}
+	tables := []ToCsvStringTestCase{
+		ToCsvStringTestCase{
+			candleToConver: candle{
+				ticker:     "Ticker1",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   150.11,
+				minPrice:   90.0,
+				firstPrice: 97.7,
+				lastPrice:  125.0,
+			},
+			result: "Ticker1,0001-01-01T01:01:01Z,97.7,150.11,90,125",
+		},
+	}
+	for _, table := range tables {
+		resultCsvString := table.candleToConver.ToCsvString()
+		if table.result != resultCsvString {
+			t.Fatalf("TestToCsvString: wrong csv string, expected: %s, got: %s",
+				table.result, resultCsvString)
+		}
+	}
+}
