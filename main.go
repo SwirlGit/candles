@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"time"
 
 	"github.com/candles/candles"
 )
@@ -36,7 +37,7 @@ func readFile(in <-chan string) <-chan string {
 }
 
 func parseLine(in <-chan string) <-chan string {
-	handler := candles.NewHandler(5 * 60)
+	handler := candles.NewHandler(5 * time.Minute)
 	out := make(chan string)
 	go func() {
 		defer close(out)

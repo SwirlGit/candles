@@ -18,11 +18,12 @@ func TestNewCandle(t *testing.T) {
 			unixTime: time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
 			price:    150.7,
 			result: candle{
-				ticker:    "Ticker",
-				unixTime:  time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
-				maxPrice:  150.7,
-				minPrice:  150.7,
-				lastPrice: 150.7,
+				ticker:     "Ticker",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   150.7,
+				minPrice:   150.7,
+				firstPrice: 150.7,
+				lastPrice:  150.7,
 			},
 		},
 	}
@@ -30,7 +31,7 @@ func TestNewCandle(t *testing.T) {
 		newCandleResult := newCandle(table.ticker, table.unixTime,
 			table.price)
 		if table.result != *newCandleResult {
-			t.Fatalf("newCandle: wrong candle, expected: %s, got: %s",
+			t.Fatalf("TestNewCandle: wrong candle, expected: %s, got: %s",
 				&table.result, newCandleResult)
 		}
 	}
@@ -45,36 +46,40 @@ func TestUpdatePrice(t *testing.T) {
 	tables := []UpdatePriceTestCase{
 		UpdatePriceTestCase{
 			initial: candle{
-				ticker:    "Ticker",
-				unixTime:  time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
-				maxPrice:  90.0,
-				minPrice:  90.0,
-				lastPrice: 90.0,
+				ticker:     "Ticker",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   90.0,
+				minPrice:   90.0,
+				firstPrice: 90.0,
+				lastPrice:  90.0,
 			},
 			newPrices: []float64{1.0, 100.0, 150.0},
 			result: candle{
-				ticker:    "Ticker",
-				unixTime:  time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
-				maxPrice:  150.0,
-				minPrice:  1.0,
-				lastPrice: 150.0,
+				ticker:     "Ticker",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   150.0,
+				minPrice:   1.0,
+				firstPrice: 90.0,
+				lastPrice:  150.0,
 			},
 		},
 		UpdatePriceTestCase{
 			initial: candle{
-				ticker:    "Ticker",
-				unixTime:  time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
-				maxPrice:  90.0,
-				minPrice:  90.0,
-				lastPrice: 90.0,
+				ticker:     "Ticker",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   90.0,
+				minPrice:   90.0,
+				firstPrice: 90.0,
+				lastPrice:  90.0,
 			},
 			newPrices: []float64{100, 150.0, 125.0},
 			result: candle{
-				ticker:    "Ticker",
-				unixTime:  time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
-				maxPrice:  150.0,
-				minPrice:  90.0,
-				lastPrice: 125.0,
+				ticker:     "Ticker",
+				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
+				maxPrice:   150.0,
+				minPrice:   90.0,
+				firstPrice: 90.0,
+				lastPrice:  125.0,
 			},
 		},
 	}
@@ -84,7 +89,7 @@ func TestUpdatePrice(t *testing.T) {
 			candleToUpdate.updatePrice(table.newPrices[i])
 		}
 		if table.result != candleToUpdate {
-			t.Fatalf("updatePrice: wrong candle, expected: %s, got: %s",
+			t.Fatalf("TestUpdatePrice: wrong candle, expected: %s, got: %s",
 				&table.result, &candleToUpdate)
 		}
 	}

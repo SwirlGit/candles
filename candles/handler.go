@@ -60,8 +60,8 @@ func validateInputValues(values inputValues) bool {
 
 func baseTime(t time.Time, d time.Duration) time.Time {
 	start := dayStart(t)
-	duration := t.Sub(start)
-	index := duration / d
+	fromStart := t.Sub(start)
+	index := fromStart / d
 	return start.Add(index * d)
 }
 
@@ -69,14 +69,13 @@ func baseTime(t time.Time, d time.Duration) time.Time {
 type Handler struct {
 	candles  map[string]*candle
 	duration time.Duration
-	lastTime time.Time
 }
 
 // NewHandler функция конструктор для обработчика
-// timeInterval в минутах
-func NewHandler(timeInterval int) *Handler {
+func NewHandler(duration time.Duration) *Handler {
 	return &Handler{
-		duration: time.Duration(timeInterval) * time.Minute,
+		candles:  make(map[string]*candle),
+		duration: duration,
 	}
 }
 
@@ -94,7 +93,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 	var candlesStrings []string
 	for ticker, currentCandle := range handler.candles {
 		if values.unixTime.Sub(currentCandle.unixTime) > handler.duration {
-			candlesStrings = append(candlesStrings, currentCandle.String())
+			candlesStrings = append(candlesStrings, currentCandle.ToCsvString())
 			delete(handler.candles, ticker)
 		}
 	}
@@ -113,7 +112,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 func (handler *Handler) Close() []string {
 	var candlesStrings []string
 	for ticker, currentCandle := range handler.candles {
-		candlesStrings = append(candlesStrings, currentCandle.String())
+		candlesStrings = append(candlesStrings, currentCandle.ToCsvString())
 		delete(handler.candles, ticker)
 	}
 	return candlesStrings
