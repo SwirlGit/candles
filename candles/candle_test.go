@@ -13,7 +13,7 @@ func TestNewCandle(t *testing.T) {
 		result   candle
 	}
 	tables := []NewCandleTestCase{
-		NewCandleTestCase{
+		{
 			ticker:   "Ticker",
 			unixTime: time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
 			price:    150.7,
@@ -44,7 +44,7 @@ func TestUpdatePrice(t *testing.T) {
 		result    candle
 	}
 	tables := []UpdatePriceTestCase{
-		UpdatePriceTestCase{
+		{
 			initial: candle{
 				ticker:     "Ticker",
 				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
@@ -63,7 +63,7 @@ func TestUpdatePrice(t *testing.T) {
 				lastPrice:  150.0,
 			},
 		},
-		UpdatePriceTestCase{
+		{
 			initial: candle{
 				ticker:     "Ticker",
 				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
@@ -101,7 +101,7 @@ func TestToCsvString(t *testing.T) {
 		result         string
 	}
 	tables := []ToCsvStringTestCase{
-		ToCsvStringTestCase{
+		{
 			candleToConver: candle{
 				ticker:     "Ticker1",
 				unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),

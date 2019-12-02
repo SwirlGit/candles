@@ -11,11 +11,11 @@ func TestDayStart(t *testing.T) {
 		result    time.Time
 	}
 	tables := []DayStartTestCase{
-		DayStartTestCase{
+		{
 			givenTime: time.Date(2019, 12, 1, 12, 37, 45, 888, time.UTC),
 			result:    time.Date(2019, 12, 1, 0, 0, 0, 0, time.UTC),
 		},
-		DayStartTestCase{
+		{
 			givenTime: time.Date(2019, 12, 1, 23, 59, 59, 888, time.UTC),
 			result:    time.Date(2019, 12, 1, 0, 0, 0, 0, time.UTC),
 		},
@@ -35,25 +35,25 @@ func TestValidateInputValues(t *testing.T) {
 		result bool
 	}
 	tables := []ValidateInputValuesTestCase{
-		ValidateInputValuesTestCase{
+		{
 			values: inputValues{
 				unixTime: time.Date(2019, 12, 1, 7, 0, 0, 0, time.UTC),
 			},
 			result: true,
 		},
-		ValidateInputValuesTestCase{
+		{
 			values: inputValues{
 				unixTime: time.Date(2019, 12, 1, 23, 59, 59, 999999999, time.UTC),
 			},
 			result: true,
 		},
-		ValidateInputValuesTestCase{
+		{
 			values: inputValues{
 				unixTime: time.Date(2019, 12, 1, 0, 0, 0, 0, time.UTC),
 			},
 			result: false,
 		},
-		ValidateInputValuesTestCase{
+		{
 			values: inputValues{
 				unixTime: time.Date(2019, 12, 1, 6, 59, 59, 999999999, time.UTC),
 			},
@@ -76,12 +76,12 @@ func TestBaseTime(t *testing.T) {
 		result    time.Time
 	}
 	tables := []BaseTimeTestCase{
-		BaseTimeTestCase{
+		{
 			givenTime: time.Date(2019, 12, 1, 12, 37, 45, 888, time.UTC),
 			duration:  5 * time.Minute,
 			result:    time.Date(2019, 12, 1, 12, 35, 0, 0, time.UTC),
 		},
-		BaseTimeTestCase{
+		{
 			givenTime: time.Date(2019, 12, 1, 1, 12, 59, 888, time.UTC),
 			duration:  14 * time.Minute,
 			result:    time.Date(2019, 12, 1, 1, 10, 0, 0, time.UTC),
@@ -102,7 +102,7 @@ func TestNewHandler(t *testing.T) {
 		result   Handler
 	}
 	tables := []NewHandlerTestCase{
-		NewHandlerTestCase{
+		{
 			duration: 5 * time.Minute,
 			result: Handler{
 				duration: 5 * time.Minute,
@@ -125,7 +125,7 @@ func TestProcessLine(t *testing.T) {
 		result   [][]string
 	}
 	tables := []ProcessLineTestCase{
-		ProcessLineTestCase{
+		{
 			handler: &Handler{
 				candles:  make(map[string]*candle),
 				duration: 1 * time.Minute,
@@ -175,17 +175,17 @@ func TestFlush(t *testing.T) {
 		result  []string
 	}
 	tables := []FlushTestCase{
-		FlushTestCase{
+		{
 			handler: &Handler{
 				candles:  make(map[string]*candle),
 				duration: 1 * time.Minute,
 			},
 			result: []string{},
 		},
-		FlushTestCase{
+		{
 			handler: &Handler{
 				candles: map[string]*candle{
-					"Ticker1": &candle{
+					"Ticker1": {
 						ticker:     "Ticker1",
 						unixTime:   time.Date(1, 1, 1, 1, 1, 1, 1, time.UTC),
 						maxPrice:   5.0,
@@ -193,7 +193,7 @@ func TestFlush(t *testing.T) {
 						firstPrice: 2.0,
 						lastPrice:  4.0,
 					},
-					"Ticker2": &candle{
+					"Ticker2": {
 						ticker:     "Ticker2",
 						unixTime:   time.Date(2, 2, 2, 2, 2, 2, 2, time.UTC),
 						maxPrice:   15.75,
