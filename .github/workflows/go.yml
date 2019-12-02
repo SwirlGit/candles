@@ -87,6 +87,4 @@ jobs:
         fi
 
     - name: Run
-      run: |
-        ls ./
-        go run -race main.go -file ./test/trades.csv
+      run: go run -race main.go -file ./test/trades.csv
