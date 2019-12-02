@@ -14,7 +14,6 @@ const (
 )
 
 var errWrongNumberOfParameters = errors.New("wrong number of parameters")
-var errWrongUnixTime = errors.New("wrong unix time")
 var validStartDuration = 7 * time.Hour
 
 type inputValues struct {
@@ -93,7 +92,7 @@ func (handler *Handler) ProcessLine(line string) ([]string, error) {
 	}
 
 	if !validateInputValues(values) {
-		return []string{}, errWrongUnixTime
+		return []string{}, nil
 	}
 
 	var candlesStrings []string

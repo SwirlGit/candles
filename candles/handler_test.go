@@ -212,12 +212,12 @@ func TestFlush(t *testing.T) {
 	for _, table := range tables {
 		resultStrings := table.handler.flush()
 		if len(table.result) != len(resultStrings) {
-			t.Fatalf("TestClose: wrong number of outcome strings, "+
+			t.Fatalf("TestFlush: wrong number of outcome strings, "+
 				"expected: %v, got: %v", len(table.result), len(resultStrings))
 		}
 		for i := 0; i < len(table.result); i++ {
 			if table.result[i] != resultStrings[i] {
-				t.Fatalf("TestClose: wrong out string line: %v, "+
+				t.Fatalf("TestFlush: wrong out string line: %v, "+
 					"expected: %v, got: %v", i+1, table.result[i], resultStrings[i])
 			}
 		}

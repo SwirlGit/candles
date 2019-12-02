@@ -83,9 +83,9 @@ func saveLine(in <-chan string) <-chan struct{} {
 					line, "candles_5min.csv", err)
 				continue
 			}
-			if n != len(line) {
+			if n != len(line)+1 {
 				log.Printf("Wrote %v symbols instead of %v while writing line %s",
-					n, len(line), line)
+					n, len(line)+1, line)
 			}
 		}
 	}()
