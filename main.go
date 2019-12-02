@@ -6,10 +6,50 @@ import (
 	"flag"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-candles/candles"
 )
+
+func fanIn(cs ...<-chan string) <-chan string {
+	var wg sync.WaitGroup
+	out := make(chan string)
+
+	output := func(c <-chan string) {
+		for n := range c {
+			out <- n
+		}
+		wg.Done()
+	}
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+func fanOut(in <-chan string) (<-chan string, <-chan string, <-chan string) {
+	out1 := make(chan string)
+	out2 := make(chan string)
+	out3 := make(chan string)
+	go func() {
+		defer close(out1)
+		defer close(out2)
+		defer close(out3)
+		for n := range in {
+			out1 <- n
+			out2 <- n
+			out3 <- n
+		}
+	}()
+	return out1, out2, out3
+}
 
 func readFile(in <-chan string) <-chan string {
 	out := make(chan string)
@@ -36,8 +76,8 @@ func readFile(in <-chan string) <-chan string {
 	return out
 }
 
-func parseLine(in <-chan string) <-chan string {
-	handler := candles.NewHandler(5 * time.Minute)
+func parseLine(in <-chan string, duration time.Duration) <-chan string {
+	handler := candles.NewHandler(duration)
 	out := make(chan string)
 	go func() {
 		defer close(out)
@@ -59,13 +99,13 @@ func parseLine(in <-chan string) <-chan string {
 	return out
 }
 
-func saveLine(in <-chan string) <-chan struct{} {
+func saveLine(in <-chan string, fileName string) <-chan struct{} {
 	out := make(chan struct{})
 	go func() {
 		defer close(out)
-		file, err := os.Create("candles_5min.csv")
+		file, err := os.Create(fileName)
 		if err != nil {
-			log.Printf("Can not open file %s: %s", "candles_5min.csv", err)
+			log.Printf("Can not open file %s: %s", fileName, err)
 			return
 		}
 		defer file.Close()
@@ -80,7 +120,7 @@ func saveLine(in <-chan string) <-chan struct{} {
 			n, err := file.WriteString(line + "\n")
 			if err != nil {
 				log.Printf("Error while writing line %s to file %s: %s",
-					line, "candles_5min.csv", err)
+					line, fileName, err)
 				continue
 			}
 			if n != len(line)+1 {
@@ -95,11 +135,26 @@ func saveLine(in <-chan string) <-chan struct{} {
 func startPipeline(fileName string) <-chan struct{} {
 	filesIn := make(chan string)
 	fileLinesOut := readFile(filesIn)
-	candlesOut := parseLine(fileLinesOut)
-	done := saveLine(candlesOut)
+	fileLinesOutShort, fileLinesOutMedium, fileLinesOutLong := fanOut(fileLinesOut)
+
+	candlesOutShort := parseLine(fileLinesOutShort, 5*time.Minute)
+	candlesOutMedium := parseLine(fileLinesOutMedium, 30*time.Minute)
+	candlesOutLong := parseLine(fileLinesOutLong, 240*time.Minute)
+
+	doneShort := saveLine(candlesOutShort, "candles_5min.csv")
+	doneMedium := saveLine(candlesOutMedium, "candles_30min.csv")
+	doneLong := saveLine(candlesOutLong, "candles_240min.csv")
 
 	filesIn <- fileName
 	close(filesIn)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		<-doneShort
+		<-doneMedium
+		<-doneLong
+	}()
 
 	return done
 }
