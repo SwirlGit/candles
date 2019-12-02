@@ -19,7 +19,7 @@ func readFile(in <-chan string) <-chan string {
 		fileName := <-in
 		file, err := os.Open(fileName)
 		if err != nil {
-			// process open file error
+			log.Printf("Can not open file %s: %s", fileName, err)
 			return
 		}
 		defer file.Close()
@@ -29,7 +29,7 @@ func readFile(in <-chan string) <-chan string {
 			out <- scanner.Text()
 		}
 		if err := scanner.Err(); err != nil {
-			// process scanner error
+			log.Printf("Error while reading file %s: %s", fileName, err)
 		}
 		out <- "EOF"
 	}()
@@ -48,7 +48,7 @@ func parseLine(in <-chan string) <-chan string {
 			}
 			outStrings, err := handler.ProcessLine(line)
 			if err != nil {
-				// process parsing error
+				log.Printf("Error while parsing line %s: %s", line, err)
 				continue
 			}
 			for _, outString := range outStrings {
@@ -65,7 +65,7 @@ func saveLine(in <-chan string) <-chan struct{} {
 		defer close(out)
 		file, err := os.Create("candles_5min.csv")
 		if err != nil {
-			// process open file error
+			log.Printf("Can not open file %s: %s", "candles_5min.csv", err)
 			return
 		}
 		defer file.Close()
@@ -79,10 +79,13 @@ func saveLine(in <-chan string) <-chan struct{} {
 			}
 			n, err := file.WriteString(line + "\n")
 			if err != nil {
-				// process err
+				log.Printf("Error while writing line %s to file %s: %s",
+					line, "candles_5min.csv", err)
+				continue
 			}
 			if n != len(line) {
-				// process wrong n number
+				log.Printf("Wrote %v symbols instead of %v while writing line %s",
+					n, len(line), line)
 			}
 		}
 	}()
