@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/candles/candles"
+	"github.com/go-candles/candles"
 )
 
 func readFile(in <-chan string) <-chan string {
