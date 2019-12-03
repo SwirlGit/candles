@@ -1,6 +1,7 @@
 package candles
 
 import (
+	"sort"
 	"testing"
 	"time"
 )
@@ -164,6 +165,11 @@ func TestProcessLine(t *testing.T) {
 				t.Fatalf("TestProcessLine: wrong number of outcome strings, "+
 					"expected: %v, got: %v", len(table.result[i]), len(resultStrings))
 			}
+			if len(resultStrings) > 0 {
+				sort.Slice(resultStrings, func(i, j int) bool {
+					return resultStrings[i] < resultStrings[j]
+				})
+			}
 			for j := 0; j < len(table.result[j]); j++ {
 				if table.result[i][j] != resultStrings[j] {
 					t.Fatalf("TestProcessLine: wrong out string step: %v, line: %v, "+
@@ -219,6 +225,11 @@ func TestFlush(t *testing.T) {
 		if len(table.result) != len(resultStrings) {
 			t.Fatalf("TestFlush: wrong number of outcome strings, "+
 				"expected: %v, got: %v", len(table.result), len(resultStrings))
+		}
+		if len(resultStrings) > 0 {
+			sort.Slice(resultStrings, func(i, j int) bool {
+				return resultStrings[i] < resultStrings[j]
+			})
 		}
 		for i := 0; i < len(table.result); i++ {
 			if table.result[i] != resultStrings[i] {
