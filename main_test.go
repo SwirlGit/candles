@@ -76,7 +76,10 @@ func checkFile(t *testing.T, testDataFileName, resultDataFileName string) {
 }
 
 func TestStartPipeline(t *testing.T) {
-	done := startPipeline("test/trades.csv")
+	done, err := startPipeline("test/trades.csv")
+	if err != nil {
+		t.Fatalf("TestStartPipeline: can not start pipeline: %s", err)
+	}
 	<-done
 
 	checkFile(t, "test/candles_5min.csv", "candles_5min.csv")

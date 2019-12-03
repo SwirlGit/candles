@@ -32,19 +32,18 @@ func fanOut(in <-chan string) (<-chan string, <-chan string, <-chan string) {
 	return out1, out2, out3
 }
 
-func readFile(in <-chan string) <-chan string {
+func readFile(in <-chan struct{}, fileName string) (<-chan string, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Printf("Can not open file %s: %s", fileName, err)
+		return nil, err
+	}
+
 	out := make(chan string)
 	go func() {
 		defer close(out)
-
-		fileName := <-in
-		file, err := os.Open(fileName)
-		if err != nil {
-			log.Printf("Can not open file %s: %s", fileName, err)
-			return
-		}
 		defer file.Close()
-
+		<-in
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			out <- scanner.Text()
@@ -54,7 +53,7 @@ func readFile(in <-chan string) <-chan string {
 		}
 		out <- "EOF"
 	}()
-	return out
+	return out, nil
 }
 
 func parseLine(in <-chan string, duration time.Duration) <-chan string {
@@ -80,15 +79,16 @@ func parseLine(in <-chan string, duration time.Duration) <-chan string {
 	return out
 }
 
-func saveLine(in <-chan string, fileName string) <-chan struct{} {
+func saveLine(in <-chan string, fileName string) (<-chan struct{}, error) {
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Printf("Can not open file %s: %s", fileName, err)
+		return nil, err
+	}
+
 	out := make(chan struct{})
 	go func() {
 		defer close(out)
-		file, err := os.Create(fileName)
-		if err != nil {
-			log.Printf("Can not open file %s: %s", fileName, err)
-			return
-		}
 		defer file.Close()
 		for {
 			line, ok := <-in
@@ -110,24 +110,36 @@ func saveLine(in <-chan string, fileName string) <-chan struct{} {
 			}
 		}
 	}()
-	return out
+	return out, nil
 }
 
-func startPipeline(fileName string) <-chan struct{} {
-	filesIn := make(chan string)
-	fileLinesOut := readFile(filesIn)
+func startPipeline(fileName string) (<-chan struct{}, error) {
+	startChan := make(chan struct{})
+	fileLinesOut, err := readFile(startChan, fileName)
+	if err != nil {
+		return nil, err
+	}
 	fileLinesOutShort, fileLinesOutMedium, fileLinesOutLong := fanOut(fileLinesOut)
 
 	candlesOutShort := parseLine(fileLinesOutShort, 5*time.Minute)
 	candlesOutMedium := parseLine(fileLinesOutMedium, 30*time.Minute)
 	candlesOutLong := parseLine(fileLinesOutLong, 240*time.Minute)
 
-	doneShort := saveLine(candlesOutShort, "candles_5min.csv")
-	doneMedium := saveLine(candlesOutMedium, "candles_30min.csv")
-	doneLong := saveLine(candlesOutLong, "candles_240min.csv")
+	doneShort, err := saveLine(candlesOutShort, "candles_5min.csv")
+	if err != nil {
+		return nil, err
+	}
+	doneMedium, err := saveLine(candlesOutMedium, "candles_30min.csv")
+	if err != nil {
+		return nil, err
+	}
+	doneLong, err := saveLine(candlesOutLong, "candles_240min.csv")
+	if err != nil {
+		return nil, err
+	}
 
-	filesIn <- fileName
-	close(filesIn)
+	startChan <- struct{}{}
+	close(startChan)
 
 	done := make(chan struct{})
 	go func() {
@@ -137,7 +149,7 @@ func startPipeline(fileName string) <-chan struct{} {
 		<-doneLong
 	}()
 
-	return done
+	return done, nil
 }
 
 func main() {
@@ -148,7 +160,11 @@ func main() {
 		return
 	}
 
-	done := startPipeline(*fileNamePtr)
+	done, err := startPipeline(*fileNamePtr)
+	if err != nil {
+		log.Printf("Can not start pipeline: %s", err)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
