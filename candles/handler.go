@@ -59,9 +59,10 @@ func validateInputValues(values inputValues) bool {
 
 func baseTime(t time.Time, d time.Duration) time.Time {
 	start := dayStart(t)
-	fromStart := t.Sub(start)
-	index := fromStart / d
-	return start.Add(index * d)
+	validStart := start.Add(validStartDuration)
+	fromValidStart := t.Sub(validStart)
+	index := fromValidStart / d
+	return validStart.Add(index * d)
 }
 
 // Handler управляющий набором свечей
