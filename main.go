@@ -6,33 +6,10 @@ import (
 	"flag"
 	"log"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/go-candles/candles"
 )
-
-func fanIn(cs ...<-chan string) <-chan string {
-	var wg sync.WaitGroup
-	out := make(chan string)
-
-	output := func(c <-chan string) {
-		for n := range c {
-			out <- n
-		}
-		wg.Done()
-	}
-	wg.Add(len(cs))
-	for _, c := range cs {
-		go output(c)
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-	return out
-}
 
 func fanOut(in <-chan string) (<-chan string, <-chan string, <-chan string) {
 	out1 := make(chan string)
@@ -42,10 +19,14 @@ func fanOut(in <-chan string) (<-chan string, <-chan string, <-chan string) {
 		defer close(out1)
 		defer close(out2)
 		defer close(out3)
-		for n := range in {
-			out1 <- n
-			out2 <- n
-			out3 <- n
+		for {
+			line, ok := <-in
+			if !ok {
+				break
+			}
+			out1 <- line
+			out2 <- line
+			out3 <- line
 		}
 	}()
 	return out1, out2, out3

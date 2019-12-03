@@ -7,11 +7,8 @@ import (
 	"time"
 )
 
-const inputTestDataFileName = "test/trades.csv"
-const outputTestDataFileName = "test/candles_5min.csv"
-const outputDataFileName = "candles_5min.csv"
-
-func checkCurrentCandles(t *testing.T, testCandles, resultCandles map[string]string) {
+// проверка текущего прочитанного блока
+func checkCurrentCandles(t *testing.T, testCandles, resultCandles map[string]string, fileName string) {
 	for testCandleTicker, testCandle := range testCandles {
 		found := false
 		for resultCandleTicker, resultCandle := range resultCandles {
@@ -23,8 +20,8 @@ func checkCurrentCandles(t *testing.T, testCandles, resultCandles map[string]str
 			}
 		}
 		if !found {
-			t.Fatalf("TestHandlePipeline: have not found in result file test "+
-				"line: %s", testCandle)
+			t.Fatalf("TestHandlePipeline: have not found in result file %s test "+
+				"line: %s", fileName, testCandle)
 		}
 	}
 	for _, resultCandle := range resultCandles {
@@ -32,19 +29,16 @@ func checkCurrentCandles(t *testing.T, testCandles, resultCandles map[string]str
 	}
 }
 
-// TestStartPipeline так как порядок выходных строк не фиксирован, кроме
+// так как порядок выходных строк не фиксирован, кроме
 // сортировки по времени, то будем проверять данные блоками, где
 // в каждом блоке все данные для одного времени открытия
-func TestStartPipeline(t *testing.T) {
-	done := startPipeline(inputTestDataFileName)
-	<-done
-
-	testDataFile, err := os.Open(outputTestDataFileName)
+func checkFile(t *testing.T, testDataFileName, resultDataFileName string) {
+	testDataFile, err := os.Open(testDataFileName)
 	if err != nil {
 		t.Fatalf("TestHandlePipeline: can not open test data file: %s", err)
 	}
 
-	resultDataFile, err := os.Open(outputDataFileName)
+	resultDataFile, err := os.Open(resultDataFileName)
 	if err != nil {
 		t.Fatalf("TestHandlePipeline: can not open result data file: %s", err)
 	}
@@ -62,7 +56,7 @@ func TestStartPipeline(t *testing.T) {
 			t.Fatalf("can not parse time: %s", err)
 		}
 		if !isFirstLine && currentTime != newTime {
-			checkCurrentCandles(t, testCandles, resultCandles)
+			checkCurrentCandles(t, testCandles, resultCandles, testDataFileName)
 		}
 		isFirstLine = false
 		currentTime = newTime
@@ -74,9 +68,18 @@ func TestStartPipeline(t *testing.T) {
 		resultCandles[resultDataScanner.Text()[0:4]] = resultDataScanner.Text()
 	}
 	if !isFirstLine {
-		checkCurrentCandles(t, testCandles, resultCandles)
+		checkCurrentCandles(t, testCandles, resultCandles, testDataFileName)
 	}
 	if resultDataScanner.Scan() {
 		t.Fatal("TestHandlePipeline: result data file has more lines than expected")
 	}
+}
+
+func TestStartPipeline(t *testing.T) {
+	done := startPipeline("test/trades.csv")
+	<-done
+
+	checkFile(t, "test/candles_5min.csv", "candles_5min.csv")
+	checkFile(t, "test/candles_30min.csv", "candles_30min.csv")
+	checkFile(t, "test/candles_240min.csv", "candles_240min.csv")
 }
