@@ -153,9 +153,10 @@ func startPipeline(fileName string) (<-chan struct{}, error) {
 }
 
 func main() {
-	fileNamePtr := flag.String("file", "", "path to file with trades")
+	fileNamePtr := flag.String("file", "", "not empty path to file with trades")
+	timeoutPtr := flag.Int("timeout", 5, "timeout in seconds > 0")
 	flag.Parse()
-	if len(*fileNamePtr) == 0 {
+	if len(*fileNamePtr) == 0 || *timeoutPtr <= 0 {
 		flag.Usage()
 		return
 	}
@@ -166,7 +167,8 @@ func main() {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(*timeoutPtr)*time.Second)
 	defer cancel()
 
 	select {

@@ -6,7 +6,7 @@ run:
 	go run main.go -file $(file)
 
 run-race:
-	go run -race main.go -file $(file)
+	go run -race main.go -file $(file) -timeout 60
 
 test:
 	go test -cover -v ./...
