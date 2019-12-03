@@ -82,9 +82,14 @@ func TestBaseTime(t *testing.T) {
 			result:    time.Date(2019, 12, 1, 12, 35, 0, 0, time.UTC),
 		},
 		{
-			givenTime: time.Date(2019, 12, 1, 1, 12, 59, 888, time.UTC),
-			duration:  14 * time.Minute,
-			result:    time.Date(2019, 12, 1, 1, 10, 0, 0, time.UTC),
+			givenTime: time.Date(2019, 12, 1, 12, 59, 59, 888, time.UTC),
+			duration:  30 * time.Minute,
+			result:    time.Date(2019, 12, 1, 12, 30, 0, 0, time.UTC),
+		},
+		{
+			givenTime: time.Date(2019, 12, 1, 7, 30, 0, 000, time.UTC),
+			duration:  240 * time.Minute,
+			result:    time.Date(2019, 12, 1, 7, 0, 0, 0, time.UTC),
 		},
 	}
 	for _, table := range tables {
